@@ -1,3 +1,6 @@
+VPcrypt
+============
+
 VPcrypt is a file encryption utility that runs from the Linux command prompt to provide a simple tool for encrypting files using a XSalsa20 stream cipher. VPcrypt is using hmacsha256 for integrity check, pbkdf for strong key derivations and finally XSalsa20 stream cipher for file confidentiality.
 
 ## Installation
