@@ -5,7 +5,7 @@ VPcrypt is a file encryption utility that runs from the Linux command prompt to 
 
 ## Installation
 
-You need [Sodium crypto library installed](https://github.com/jedisct1/libsodium)
+You need [Sodium crypto library installed](https://github.com/jedisct1/libsodium).
 Download vpcrypt.c file from this repository, then just build:
 
     gcc -Wall vpcrypt.c -lsodium -o sifrator
@@ -14,4 +14,4 @@ Download vpcrypt.c file from this repository, then just build:
 
     ./vpcrypt [ -e | --encrypt | -d | --decrypt] <file_name>
 
-I need peer review of this code! Browse through it, before blindly using. Thank you.
+I need peer review of this code! Browse through it before blindly using. Thank you.
