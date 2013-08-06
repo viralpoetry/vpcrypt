@@ -1,7 +1,14 @@
 
-// Working under Sodium version 0.3
-// gcc -Wall vpcrypt.c -lsodium -o vpcrypt
-// Usage: ./vpcrypt [ -e | --encrypt | -d | --decrypt] <file_name>
+/*
+*  File encryption utility VPcrypt
+*  https://github.com/viralpoetry/VPcrypt
+*  Working under Sodium version 0.3
+*
+*  Build:
+*  gcc -Wall vpcrypt.c -lsodium -o vpcrypt
+*  Usage:
+*  ./vpcrypt [ -e | --encrypt | -d | --decrypt] <file_name>
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +25,7 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define concateLen (crypto_stream_xsalsa20_NONCEBYTES + crypto_stream_xsalsa20_KEYBYTES)
 
+void help( void );
 void verifyCrypto( void );
 ssize_t my_getpass (char **, size_t *, FILE *);
 int pbkdf(const unsigned char *, const unsigned char *, size_t ,
@@ -54,10 +62,8 @@ int main( int argc, char* argv[] ) {
     verifyCrypto( );
 
     int c;
-    //int digit_optind = 0;
 
     while (1) {
-        //int this_option_optind = optind ? optind : 1;
         int option_index = 0;
         static struct option long_options[] = {
             {"encrypt",     required_argument, 0,  'e' },
@@ -71,14 +77,6 @@ int main( int argc, char* argv[] ) {
         }
 
         switch (c) {
-            case 0:
-              printf("option %s", long_options[option_index].name);
-              if (optarg) {
-                  printf(" with arg %s", optarg);
-              }
-              printf("\n");
-              break;
-
             /* Encrypt case */
             case 'e':
               in = fopen(optarg, "rb");
@@ -168,7 +166,6 @@ int main( int argc, char* argv[] ) {
                   }
                   strncpy(outName, optarg, strlen(optarg) - 8);
                   outName[strlen(optarg) - 8] = '\0';
-                  //fprintf(stdout, "filename %s\n", outName);
               } else {
                   if ((outName = malloc(strlen(optarg) + 8)) == NULL) {
                       fprintf( stderr, "error: malloc!\n");
@@ -201,23 +198,26 @@ int main( int argc, char* argv[] ) {
               break;
 
             case '?':
+              help();
               break;
 
-            default:
-              printf("?? getopt returned character code 0%o ??\n", c);
+            default:;
+              //printf("?? getopt returned character code 0%o ??\n", c);
         }
     }
 
     if (optind < argc) {
-        printf("non-option ARGV-elements: ");
-        /*while (optind < argc) {
-            printf("%s ", argv[optind++]);
-        }*/
-        fprintf(stderr, "Unrecognized command!\nUsage:  [ -e | --encrypt | -d | --decrypt] <file_name>\n\n");
+        fprintf(stderr, "Unrecognized command!\n");
+        help();
     }
 
     //memset(weakPass, 0, strlen((char*)weakPass));
     return EXIT_SUCCESS;
+}
+
+void help( void ) {
+    fprintf(stdout, "Usage:  [ -e | --encrypt | -d | --decrypt] <file_name>\n\n");
+    exit(EXIT_SUCCESS);
 }
 
 /**
@@ -518,7 +518,6 @@ int encrypt_file(FILE *fIn, FILE *fOut, size_t fileSize, const unsigned char wea
 
         /* Chaining hmac with previous one */
         crypto_auth_hmacsha256(mac, ct, sizeof ct - 1U, key);
-        //crypto_auth_hmacsha256(mac, ct, sizeof ct, key);
 
         /* Increment counter value */
         counter++;

@@ -15,3 +15,8 @@ Download vpcrypt.c file from this repository, then just build:
     ./vpcrypt [ -e | --encrypt | -d | --decrypt] <file_name>
 
 I need peer review of this code! Browse through it before blindly using. Thank you.
+
+## TODO
+
+Paranoia mode switch (encrypt file without identifiable header information).
+Digital signatures.
