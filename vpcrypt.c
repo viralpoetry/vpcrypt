@@ -1,6 +1,6 @@
 
-// Working under Sodium version 0.3.
-// gcc -Wall vpcrypt.c -lsodium -o sifrator
+// Working under Sodium version 0.3
+// gcc -Wall vpcrypt.c -lsodium -o vpcrypt
 // Usage: ./vpcrypt [ -e | --encrypt | -d | --decrypt] <file_name>
 
 #include <stdio.h>
@@ -12,7 +12,8 @@
 #include <sys/stat.h>
 
 #define PBKDF_ITER 2000
-#define BLOCK_BYTES 1048576
+//#define BLOCK_BYTES 1048576
+#define BLOCK_BYTES 4096
 #define SALT_BYTES 32
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define concateLen (crypto_stream_xsalsa20_NONCEBYTES + crypto_stream_xsalsa20_KEYBYTES)
@@ -86,7 +87,7 @@ int main( int argc, char* argv[] ) {
                   return EXIT_FAILURE;
               }
 
-              if ((outName = malloc(strlen(optarg) + 8)) == NULL) {
+              if ((outName = malloc(strlen(optarg) + 9)) == NULL) {
                   fprintf( stderr, "error: malloc!\n");
                   fclose(in);
                   return EXIT_FAILURE;
@@ -124,14 +125,13 @@ int main( int argc, char* argv[] ) {
                   if( ( read = my_getpass (&passReentered, &len, stdin) ) != -1 ) {
                       if(memcmp(pass, passReentered, MIN(strlen((char*)pass), strlen((char*)passReentered))) != 0 ) {
                           fprintf(stderr, "error: password did not match!\n");
+                          free(pass);
+                          free(outName);
+                          free(passReentered);
                           fclose(in);
                           fclose(out);
-                          free(pass);
-                          free(passReentered);
                           return EXIT_FAILURE;
                       }
-
-                      //fprintf(stdout, "signs: %d pass: %s\n", read, passReentered);
 
                       /* Pass with \0 */
                       encrypt_file(in, out, fileSize, (unsigned char*)pass, read);
@@ -140,6 +140,7 @@ int main( int argc, char* argv[] ) {
 
               /* MEMSET here... */
               free(pass);
+              free(outName);
               free(passReentered);
               fclose(in);
               fclose(out);
@@ -160,15 +161,16 @@ int main( int argc, char* argv[] ) {
 
               /* Reconstruct file name */
               if( memcmp(".crypted", optarg + (strlen(optarg) - 8), 8) == 0 ) {
-                  if ((outName = malloc(strlen(optarg) - 8)) == NULL) {
+                  if ((outName = malloc(strlen(optarg) - 7)) == NULL) {
                       fprintf( stderr, "error: malloc!\n");
                       fclose(in);
                       return EXIT_FAILURE;
                   }
                   strncpy(outName, optarg, strlen(optarg) - 8);
+                  outName[strlen(optarg) - 8] = '\0';
                   //fprintf(stdout, "filename %s\n", outName);
               } else {
-                  if ((outName = malloc(strlen(optarg) + 7)) == NULL) {
+                  if ((outName = malloc(strlen(optarg) + 8)) == NULL) {
                       fprintf( stderr, "error: malloc!\n");
                       fclose(in);
                       return EXIT_FAILURE;
@@ -182,8 +184,8 @@ int main( int argc, char* argv[] ) {
               out = fopen(outName, "wb");
               if (out == NULL) {
                   fprintf(stderr, "error[-d]: Couldn't open file %s!\n", outName);
-                  fclose(in);
                   free(outName);
+                  fclose(in);
                   return EXIT_FAILURE;
               }
 
@@ -192,10 +194,10 @@ int main( int argc, char* argv[] ) {
                   decrypt_file(in, out, fileSize, (unsigned char*)pass, read);
               }
 
-              fclose(in);
-              fclose(out);
               free(pass);
               free(outName);
+              fclose(in);
+              fclose(out);
               break;
 
             case '?':
@@ -482,7 +484,7 @@ int encrypt_file(FILE *fIn, FILE *fOut, size_t fileSize, const unsigned char wea
         fprintf( stderr, "error: memcpy!\n");
         exit( EXIT_FAILURE );
     }
-    crypto_auth_hmacsha256(fHeader.headerMac, nonceKey, concateLen, headerKey);
+    crypto_auth_hmacsha256(fHeader.headerMac, nonceKey, concateLen - 1, headerKey);
     err = fwrite(&fHeader.headerMac, crypto_auth_hmacsha256_BYTES,  1, fOut);
     if( err != 1 ) {
         fprintf( stderr, "error: Write hmac!\n");
@@ -516,6 +518,7 @@ int encrypt_file(FILE *fIn, FILE *fOut, size_t fileSize, const unsigned char wea
 
         /* Chaining hmac with previous one */
         crypto_auth_hmacsha256(mac, ct, sizeof ct - 1U, key);
+        //crypto_auth_hmacsha256(mac, ct, sizeof ct, key);
 
         /* Increment counter value */
         counter++;
@@ -656,7 +659,7 @@ int decrypt_file(FILE *fIn, FILE *fOut, size_t fileSize, const unsigned char wea
     }
 
     /* Compare hmac values */
-    if( crypto_auth_hmacsha256_verify(fHeader.headerMac, nonceKey, concateLen, headerKey) == -1 ) {
+    if( crypto_auth_hmacsha256_verify(fHeader.headerMac, nonceKey, concateLen - 1, headerKey) == -1 ) {
         fprintf(stderr, "error: Wrong password!\n");
         exit( EXIT_FAILURE );
     }
