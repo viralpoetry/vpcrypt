@@ -35,7 +35,7 @@ int decrypt_file(FILE *, FILE *, size_t , const unsigned char [], size_t);
 
 /* File header */
 typedef struct {
-    char magic[8];
+    /*char magic[8];*/
     unsigned char salt[SALT_BYTES];
     unsigned char headerNonce[crypto_stream_xsalsa20_NONCEBYTES];
     unsigned char messageNonce[crypto_stream_xsalsa20_NONCEBYTES];
@@ -63,147 +63,147 @@ int main( int argc, char* argv[] ) {
 
     int c;
 
-    while (1) {
-        int option_index = 0;
-        static struct option long_options[] = {
-            {"encrypt",     required_argument, 0,  'e' },
-            {"decrypt",     required_argument, 0,  'd' },
-            {0,         0,                 0,  0 }
-        };
+    //while (1) {
+    int option_index = 0;
+    static struct option long_options[] = {
+        {"encrypt",     required_argument, 0,  'e' },
+        {"decrypt",     required_argument, 0,  'd' },
+        {0,         0,                 0,  0 }
+    };
 
-        c = getopt_long(argc, argv, "e:d:", long_options, &option_index);
-        if (c == -1) {
-            break;
-        }
+    c = getopt_long(argc, argv, "e:d:", long_options, &option_index);
+    if (c == -1) {
+        help();
+        //break;
+    }
 
-        switch (c) {
-            /* Encrypt case */
-            case 'e':
-              in = fopen(optarg, "rb");
-              if (in == NULL) {
-                  fprintf(stderr, "error[-e]: Couldn't open file %s!\n", optarg);
-                  return EXIT_FAILURE;
-              }
+    switch (c) {
+        /* Encrypt case */
+        case 'e':
+          in = fopen(optarg, "rb");
+          if (in == NULL) {
+              fprintf(stderr, "error[-e]: Couldn't open file %s!\n", optarg);
+              return EXIT_FAILURE;
+          }
 
-              if ((outName = malloc(strlen(optarg) + 9)) == NULL) {
-                  fprintf( stderr, "error: malloc!\n");
-                  fclose(in);
-                  return EXIT_FAILURE;
-              }
-              /* File size */
-              stat(optarg, &st);
-              fileSize = st.st_size;
-              rewind(in);
+          if ((outName = malloc(strlen(optarg) + 9)) == NULL) {
+              fprintf( stderr, "error: malloc!\n");
+              fclose(in);
+              return EXIT_FAILURE;
+          }
+          /* File size */
+          stat(optarg, &st);
+          fileSize = st.st_size;
+          rewind(in);
 
-              /* Create the name for encrypted file */
-              strncpy(outName, optarg, strlen(optarg));
-              strncpy(outName + strlen(optarg), ".crypted", 8);
-              outName[strlen(optarg) + 8] = '\0';
+          /* Create the name for encrypted file */
+          strncpy(outName, optarg, strlen(optarg));
+          strncpy(outName + strlen(optarg), ".crypted", 8);
+          outName[strlen(optarg) + 8] = '\0';
 
-              out = fopen(outName, "wb");
-              if (out == NULL) {
-                  fprintf(stderr, "error[-e]: Couldn't open file %s!\n", outName);
-                  fclose(in);
+          out = fopen(outName, "wb");
+          if (out == NULL) {
+              fprintf(stderr, "error[-e]: Couldn't open file %s!\n", outName);
+              fclose(in);
+              free(outName);
+              return EXIT_FAILURE;
+          }
+
+          fprintf(stdout, "Enter password: \n");
+          if( ( read = my_getpass (&pass, &len, stdin) ) != -1 ) {
+              if( read < 8 ) {
+                  fprintf(stderr, "Password must be at least 8 characters long!\n");
+                  free(pass);
                   free(outName);
+                  fclose(in);
+                  fclose(out);
                   return EXIT_FAILURE;
               }
 
-              fprintf(stdout, "Enter password: \n");
-              if( ( read = my_getpass (&pass, &len, stdin) ) != -1 ) {
-                  if( read < 8 ) {
-                      fprintf(stderr, "Password must be at least 8 characters long!\n");
+              fprintf(stdout, "\nReenter password: \n");
+              if( ( read = my_getpass (&passReentered, &len, stdin) ) != -1 ) {
+                  if(memcmp(pass, passReentered, MIN(strlen((char*)pass), strlen((char*)passReentered))) != 0 ) {
+                      fprintf(stderr, "error: password did not match!\n");
                       free(pass);
                       free(outName);
+                      free(passReentered);
                       fclose(in);
                       fclose(out);
                       return EXIT_FAILURE;
                   }
 
-                  fprintf(stdout, "\nReenter password: \n");
-                  if( ( read = my_getpass (&passReentered, &len, stdin) ) != -1 ) {
-                      if(memcmp(pass, passReentered, MIN(strlen((char*)pass), strlen((char*)passReentered))) != 0 ) {
-                          fprintf(stderr, "error: password did not match!\n");
-                          free(pass);
-                          free(outName);
-                          free(passReentered);
-                          fclose(in);
-                          fclose(out);
-                          return EXIT_FAILURE;
-                      }
-
-                      /* Pass with \0 */
-                      encrypt_file(in, out, fileSize, (unsigned char*)pass, read);
-                  }
+                  /* Pass with \0 */
+                  encrypt_file(in, out, fileSize, (unsigned char*)pass, read);
               }
+          }
 
-              /* MEMSET here... */
-              free(pass);
-              free(outName);
-              free(passReentered);
-              fclose(in);
-              fclose(out);
-              break;
+          /* MEMSET here... */
+          free(pass);
+          free(outName);
+          free(passReentered);
+          fclose(in);
+          fclose(out);
+          break;
 
-            /* Decrypt case */
-            case 'd':
-              in = fopen(optarg, "rb");
-              if (in == NULL) {
-                  fprintf(stderr, "error[-d]: Couldn't open file %s!\n", optarg);
-                  return EXIT_FAILURE;
-              }
+        /* Decrypt case */
+        case 'd':
+          in = fopen(optarg, "rb");
+          if (in == NULL) {
+              fprintf(stderr, "error[-d]: Couldn't open file %s!\n", optarg);
+              return EXIT_FAILURE;
+          }
 
-              /* File size */
-              stat(optarg, &st);
-              fileSize = st.st_size;
-              rewind(in);
+          /* File size */
+          stat(optarg, &st);
+          fileSize = st.st_size;
+          rewind(in);
 
-              /* Reconstruct file name */
-              if( memcmp(".crypted", optarg + (strlen(optarg) - 8), 8) == 0 ) {
-                  if ((outName = malloc(strlen(optarg) - 7)) == NULL) {
-                      fprintf( stderr, "error: malloc!\n");
-                      fclose(in);
-                      return EXIT_FAILURE;
-                  }
-                  strncpy(outName, optarg, strlen(optarg) - 8);
-                  outName[strlen(optarg) - 8] = '\0';
-              } else {
-                  if ((outName = malloc(strlen(optarg) + 8)) == NULL) {
-                      fprintf( stderr, "error: malloc!\n");
-                      fclose(in);
-                      return EXIT_FAILURE;
-                  }
-                  strncpy(outName, optarg, strlen(optarg));
-                  strncpy(outName + strlen(optarg), "(plain)", 7);
-                  outName[strlen(optarg) + 7] = '\0';
-                  fprintf(stdout, "filename %s\n", outName);
-              }
-
-              out = fopen(outName, "wb");
-              if (out == NULL) {
-                  fprintf(stderr, "error[-d]: Couldn't open file %s!\n", outName);
-                  free(outName);
+          /* Reconstruct file name */
+          if( memcmp(".crypted", optarg + (strlen(optarg) - 8), 8) == 0 ) {
+              if ((outName = malloc(strlen(optarg) - 7)) == NULL) {
+                  fprintf( stderr, "error: malloc!\n");
                   fclose(in);
                   return EXIT_FAILURE;
               }
-
-              fprintf(stdout, "Enter password: \n");
-              if( ( read = my_getpass (&pass, &len, stdin) ) != -1 ) {
-                  decrypt_file(in, out, fileSize, (unsigned char*)pass, read);
+              strncpy(outName, optarg, strlen(optarg) - 8);
+              outName[strlen(optarg) - 8] = '\0';
+          } else {
+              if ((outName = malloc(strlen(optarg) + 8)) == NULL) {
+                  fprintf( stderr, "error: malloc!\n");
+                  fclose(in);
+                  return EXIT_FAILURE;
               }
+              strncpy(outName, optarg, strlen(optarg));
+              strncpy(outName + strlen(optarg), "(plain)", 7);
+              outName[strlen(optarg) + 7] = '\0';
+              fprintf(stdout, "filename %s\n", outName);
+          }
 
-              free(pass);
+          out = fopen(outName, "wb");
+          if (out == NULL) {
+              fprintf(stderr, "error[-d]: Couldn't open file %s!\n", outName);
               free(outName);
               fclose(in);
-              fclose(out);
-              break;
+              return EXIT_FAILURE;
+          }
 
-            case '?':
-              help();
-              break;
+          fprintf(stdout, "Enter password: \n");
+          if( ( read = my_getpass (&pass, &len, stdin) ) != -1 ) {
+              decrypt_file(in, out, fileSize, (unsigned char*)pass, read);
+          }
 
-            default:;
-              //printf("?? getopt returned character code 0%o ??\n", c);
-        }
+          free(pass);
+          free(outName);
+          fclose(in);
+          fclose(out);
+          break;
+
+        case '?':
+          help();
+          break;
+
+        default:;
+          //printf("?? getopt returned character code 0%o ??\n", c);
     }
 
     if (optind < argc) {
@@ -425,12 +425,12 @@ int encrypt_file(FILE *fIn, FILE *fOut, size_t fileSize, const unsigned char wea
     memset(nonce + crypto_stream_xsalsa20_NONCEBYTES - 4, 0, 4);
 
     /* Magic value */
-    strncpy(fHeader.magic, "VPcrypt", 8);
+    /*strncpy(fHeader.magic, "VPcrypt", 8);
     err = fwrite(&fHeader.magic, 8,  1, fOut);
     if( err != 1 ) {
         fprintf( stderr, "error: Write magic!\n");
         exit( EXIT_FAILURE );
-    }
+    }*/
 
     /* Salt for password derivation  */
     err = fwrite(&fHeader.salt, SALT_BYTES,  1, fOut);
@@ -590,6 +590,7 @@ int decrypt_file(FILE *fIn, FILE *fOut, size_t fileSize, const unsigned char wea
     unsigned char *mac = ct + BLOCK_BYTES;
 
     /* Compare magic value */
+    /*
     err = fread(&fHeader.magic, 8,  1, fIn);
     if( err != 1 ) {
         fprintf( stderr, "error: Write magic!\n");
@@ -600,7 +601,7 @@ int decrypt_file(FILE *fIn, FILE *fOut, size_t fileSize, const unsigned char wea
             fprintf(stderr, "error: Invalid VPcrypt file!\n");
             exit( EXIT_FAILURE );
         }
-    }
+    }*/
 
     /* Read salt from file */
     err = fread(&fHeader.salt, SALT_BYTES,  1, fIn);

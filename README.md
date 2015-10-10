@@ -6,9 +6,10 @@ VPcrypt is a file encryption utility that runs from the Linux command prompt to 
 ## Installation
 
 You need [Sodium crypto library installed](https://github.com/jedisct1/libsodium).
+After installation, run ldconfig command.
 Download vpcrypt.c file from this repository, then just build:
 
-    gcc -Wall vpcrypt.c -lsodium -o sifrator
+    make
 
 ## Usage
 
@@ -18,5 +19,6 @@ I need peer review of this code! Browse through it before blindly using. Thank y
 
 ## TODO
 
-Paranoia mode switch (encrypt file without identifiable header information).
+print help when no input
+Create Makefile
 Digital signatures.
