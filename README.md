@@ -19,6 +19,4 @@ I need peer review of this code! Browse through it before blindly using. Thank y
 
 ## TODO
 
-print help when no input
-Create Makefile
 Digital signatures.
