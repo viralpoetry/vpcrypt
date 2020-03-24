@@ -7,26 +7,28 @@ VPcrypt is a file encryption utility that runs from the Linux command prompt to 
 
 You need [Sodium crypto library installed](https://github.com/jedisct1/libsodium).
 ```
-$ sudo apt-get update
-$ sudo apt-get install build-essential
+sudo apt-get update
+sudo apt-get install build-essential
 
-# download libsodium
-https://download.libsodium.org/libsodium/releases/
+# download libsodium  
+wget https://download.libsodium.org/libsodium/releases/LATEST.tar.gz
 
 # extract libsodium
-$ tar -xvzf LATEST.tar.gz
+tar -xvzf LATEST.tar.gz
 
 # install libsodium
-$ ./configure
-$ make
-$ make check
-$ sudo make install
+cd libsodium-stable
+./configure
+make
+make check
+sudo make install
 
 # create the necessary links
-$ sudo ldconfig
+sudo ldconfig
 
-# Download this repository, then just build vpcrypt.c using make command:
-$ make
+# Build vpcrypt.c using make command, then install it:
+make
+sudo cp vpcrypt /usr/local/bin/
 ```
 
 ## Usage
